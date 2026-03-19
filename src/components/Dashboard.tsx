@@ -120,6 +120,9 @@ export default function Dashboard(){
     fetch("/api/articles").then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setArticles(d); }).catch(()=>{});
     fetch("/api/keywords").then(r=>r.json()).then(d=>{ if(Array.isArray(d)) setKeywords(d.map((k:any)=>k.keyword)); }).catch(()=>{});
     fetch("/api/countries").then(r=>r.json()).then(d=>{
+      fetch("/api/scan-history").then(r=>r.json()).then(d=>{
+      if(d && d.date) setLastFull(d.date);
+    }).catch(()=>{});
       if(Array.isArray(d)) setCountries(d.map((c:any)=>({code:c.code,name:c.name,flag:c.flag||"",on:c.active})));
     }).catch(()=>{});
   },[authed]);
