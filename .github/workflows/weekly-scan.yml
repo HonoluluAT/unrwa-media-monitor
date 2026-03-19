@@ -10,31 +10,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Scan Lazzarini
-        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Lazzarini"
+        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Lazzarini" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA
-        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=UNRWA"
+        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=UNRWA" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan Hilfswerk
-        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen"
+        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA full name
-        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees"
+        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA short name
-        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency"
+        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency" || true
 
       - name: Send email report
-        run: curl -sf -X GET "${{ secrets.APP_URL }}/api/cron" -H "Authorization:Bearer ${{ secrets.CRON_SECRET }}"
+        run: curl -v -X GET "${{ secrets.APP_URL }}/api/cron" -H "Authorization:Bearer ${{ secrets.CRON_SECRET }}" || true
