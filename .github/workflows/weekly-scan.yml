@@ -10,31 +10,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Scan Lazzarini
-        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Lazzarini" || true
+        run: curl -v -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=Lazzarini" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA
-        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=UNRWA" || true
+        run: curl -v -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=UNRWA" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan Hilfswerk
-        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen" || true
+        run: curl -v -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA full name
-        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees" || true
+        run: curl -v -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees" || true
 
       - name: Wait 3 minutes
         run: sleep 180
 
       - name: Scan UNRWA short name
-        run: curl -v -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency" || true
+        run: curl -v -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency" || true
 
       - name: Send email report
-        run: curl -v -X GET "${{ secrets.APP_URL }}/api/cron" -H "Authorization:Bearer ${{ secrets.CRON_SECRET }}" || true
+        run: curl -v -X GET "https://unrwa-media-monitor.vercel.app/api/cron" -H "Authorization:Bearer ${{ secrets.CRON_SECRET }}" || true
