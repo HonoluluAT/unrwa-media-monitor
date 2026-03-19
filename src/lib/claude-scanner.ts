@@ -14,18 +14,26 @@ interface Article {
   summary_en: string;
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+export async function searchKeyword(
+  keyword: string,
+  countryNames: string
+): Promise<string> {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-async function searchBatch(query: string): Promise<string> {
   const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 3000,
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 4000,
     // @ts-ignore
     tools: [{ type: "web_search_20250305", name: "web_search" }],
-    messages: [{ role: "user", content: query }],
+    messages: [
+      {
+        role: "user",
+        content: `Search for news articles from ${weekAgo} to ${today} from media outlets in ${countryNames} (especially ORF, Der Standard, Kurier, Die Presse, NZZ, SRF, SWI swissinfo.ch, watson.ch, Tages-Anzeiger, Blick, Kleine Zeitung, Salzburger Nachrichten, Profil) that mention "${keyword}". Find as many articles as possible. For each article list: exact title, source outlet name, publication date, and full URL.`,
+      },
+    ],
   });
+
   let text = "";
   for (const block of response.content) {
     if (block.type === "text") text += block.text + "\n";
@@ -33,59 +41,44 @@ async function searchBatch(query: string): Promise<string> {
   return text;
 }
 
-export async function scanMedia(
+export async function analyzeResults(
+  rawResults: string,
   keywords: string[],
-  countries: { code: string; name: string }[]
+  countryNames: string
 ): Promise<Article[]> {
   const today = new Date().toISOString().slice(0, 10);
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const countryNames = countries.map((c) => c.name).join(", ");
-  const kwAll = keywords.join(", ");
 
-  // Single comprehensive search instead of per-keyword to stay under 60s
-  let searchResults = "";
-  try {
-    searchResults = await searchBatch(
-      `Search for all news articles from ${weekAgo} to ${today} from media outlets in ${countryNames} (especially ORF, Der Standard, NZZ, SRF, SWI swissinfo.ch, Kurier, watson.ch, Tages-Anzeiger, Die Presse, Blick) mentioning any of these: ${kwAll}. Find as many articles as possible. List each with title, source, date, URL.`
-    );
-  } catch (e: any) {
-    console.error("Search failed:", e.message);
-    return [];
-  }
-
-  if (!searchResults.trim()) return [];
-
-  await delay(5000);
-
-  // Convert to JSON with detailed summaries
-  const jsonResponse = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 8000,
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 16000,
     messages: [
       {
         role: "user",
-        content: `Search results for UNRWA news from ${countryNames} media (${weekAgo} to ${today}):
+        content: `Here are search results for UNRWA-related news from ${countryNames} media (${weekAgo} to ${today}):
 
-${searchResults}
+${rawResults}
 
-Create JSON with ALL unique articles. For each:
-- title: original headline
+Create a JSON object with ALL unique articles. Deduplicate by URL. For each article:
+- title: headline in original language
 - source: outlet name
 - country: "Austria" or "Switzerland"
 - date: YYYY-MM-DD
 - url: full URL
-- keywords: matching terms from: ${kwAll}
-- relevance: 0-100
-- sentiment: "positive", "neutral", or "negative"
-- summary_en: detailed 4-6 paragraph English summary covering key facts, quotes, political context, reactions, and significance for UNRWA
+- keywords: which of these matched: ${keywords.join(", ")}
+- relevance: 0-100 (how directly it covers UNRWA/Lazzarini/Palestine refugees)
+- sentiment: "positive", "neutral", or "negative" toward UNRWA
+- summary_en: a detailed English summary of 4-6 substantial paragraphs covering key facts, direct quotes where available, political context and background, reactions from different parties and stakeholders, and the broader significance for UNRWA operations and funding
 
-Return ONLY raw JSON. No markdown. No explanation. Start with { end with }
+Include ALL articles found. Be thorough.
+
+CRITICAL: Return ONLY raw JSON. No text before or after. No markdown. Start with { end with }
 {"articles":[]}`,
       },
     ],
   });
 
-  const textBlock = jsonResponse.content.find((b) => b.type === "text");
+  const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") return [];
 
   let jsonStr = textBlock.text.trim();
