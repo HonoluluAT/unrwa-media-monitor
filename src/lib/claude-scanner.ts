@@ -22,7 +22,7 @@ export async function searchKeyword(
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 4000,
     // @ts-ignore
     tools: [{ type: "web_search_20250305", name: "web_search" }],
