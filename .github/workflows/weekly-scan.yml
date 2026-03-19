@@ -1,0 +1,7 @@
+- name: Scan keyword - YOUR KEYWORD
+        run: |
+          curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=YOUR%20URL%20ENCODED%20KEYWORD" \
+            -H "Content-Type: application/json"
+
+      - name: Wait 3 minutes
+        run: sleep 180
