@@ -109,8 +109,7 @@ For each article provide:
 - keywords: which of these matched: ${keywords.join(", ")}
 - relevance: 0-100 (how directly it covers UNRWA/Lazzarini/Palestine refugees)
 - sentiment: "positive", "neutral", or "negative" toward UNRWA
-- summary_en: two substantial paragraphs in English summarizing the article content and its significance
-
+- summary_en: a detailed English summary of 4-6 substantial paragraphs. Cover the key facts, quotes, political context, reactions from different parties, and the broader significance for UNRWA operations and funding. Be thorough and analytical, similar to a professional media briefing.
 Include ALL articles found, even if only tangentially related. Better to include more than miss important coverage.
 
 CRITICAL: Return ONLY raw JSON. No explanation. No markdown. Start with { end with }
