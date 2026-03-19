@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     // DEFAULT: Quick single scan (for the Update button)
     const keywords = await sql`SELECT keyword FROM keywords WHERE active = TRUE`;
     const kwList = keywords.map((k: any) => k.keyword);
-    const shortKw = kwList.slice(0, 2).join(", "); // Just use first 2 keywords for quick scan
+    const shortKw = kwList.slice(0, 3).join(", "); // Use first 3 keywords for quick scan
 
     const rawResults = await searchKeyword(shortKw, countryNames);
     if (!rawResults.trim()) {
