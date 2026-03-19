@@ -111,13 +111,12 @@ export async function POST(req: Request) {
         console.error("Insert error:", a.url, err);
       }
     }
-
-    await sql`
+await sql`
       INSERT INTO scan_history (scan_date, article_count, keywords_used, countries_scanned)
       VALUES (${batchId}, ${inserted}, ${kwList}, ${countries.map((c: any) => c.name)})
     `;
 
-    return NextResponse.json({ ok: true, found: articles.length, saved: inserted });
+    return NextResponse.json({ ok: true, found: articles.length, saved: inserted, type: "quick" });
   } catch (error: any) {
     console.error("Scan failed:", error);
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
