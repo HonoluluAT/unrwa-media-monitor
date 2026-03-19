@@ -1,13 +1,25 @@
-import { Resend } from "resend";
+let resend: any = null;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    const { Resend } = require("resend");
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function sendReport(to: string, articles: any[]) {
+  const r = getResend();
+  if (!r) {
+    console.log("Resend not configured, skipping email");
+    return;
+  }
+
   const top = articles
     .sort((a: any, b: any) => b.relevance - a.relevance)
     .slice(0, 10);
 
-  await resend.emails.send({
+  await r.emails.send({
     from: "UNRWA Monitor <onboarding@resend.dev>",
     to,
     subject: `UNRWA Media Report — ${new Date().toLocaleDateString("en-GB")}`,
