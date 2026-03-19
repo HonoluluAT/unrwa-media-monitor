@@ -75,4 +75,63 @@ export async function scanMedia(
         const r = await searchOnce(
           `Search for news articles from the past 7 days (${weekAgo} to ${today}) from Swiss media outlets (${CH_OUTLETS}) mentioning "${kw}". Find as many articles as possible. For each article list: title, source, date, URL.`
         );
-        allResults += `\n--- Switze
+        allResults += `\n--- Switzerland: "${kw}" ---\n${r}\n`;
+      } catch (e: any) {
+        console.error(`CH search failed for "${kw}":`, e.message);
+      }
+      await delay(15000);
+    }
+  }
+
+  if (!allResults.trim()) return [];
+
+  await delay(15000);
+
+  // Convert to structured JSON
+  const jsonResponse = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 8000,
+    messages: [
+      {
+        role: "user",
+        content: `Here are search results for UNRWA-related news from Austrian and Swiss media (${weekAgo} to ${today}):
+
+${allResults}
+
+Create a JSON object listing ALL unique articles found. Deduplicate by URL. If an article matched multiple keywords, list it once with all matching keywords.
+
+For each article provide:
+- title: original language headline
+- source: outlet name
+- country: "Austria" or "Switzerland"
+- date: YYYY-MM-DD
+- url: full URL to the article
+- keywords: which of these matched: ${keywords.join(", ")}
+- relevance: 0-100 (how directly it covers UNRWA/Lazzarini/Palestine refugees)
+- sentiment: "positive", "neutral", or "negative" toward UNRWA
+- summary_en: two substantial paragraphs in English summarizing the article content and its significance
+
+Include ALL articles found, even if only tangentially related. Better to include more than miss important coverage.
+
+CRITICAL: Return ONLY raw JSON. No explanation. No markdown. Start with { end with }
+
+{"articles":[]}`,
+      },
+    ],
+  });
+
+  const textBlock = jsonResponse.content.find((b) => b.type === "text");
+  if (!textBlock || textBlock.type !== "text") return [];
+
+  let jsonStr = textBlock.text.trim();
+  const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+  if (jsonMatch) jsonStr = jsonMatch[0];
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return parsed.articles || [];
+  } catch (e) {
+    console.error("JSON parse failed:", jsonStr.slice(0, 500));
+    return [];
+  }
+}
