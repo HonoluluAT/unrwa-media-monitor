@@ -20,47 +20,23 @@ export async function scanMedia(
 ): Promise<Article[]> {
   const countryNames = countries.map((c) => c.name).join(", ");
   const today = new Date().toISOString().slice(0, 10);
+  const kwList = keywords.map((k, i) => `${i + 1}. "${k}"`).join("\n");
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 16000,
-   // @ts-ignore
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 8000,
+    // @ts-ignore
     tools: [{ type: "web_search_20250305", name: "web_search" }],
     messages: [
       {
         role: "user",
-        content: `You are a media monitoring analyst for UNRWA. Today is ${today}.
+        content: `Media monitor for UNRWA. Date: ${today}. Search each keyword separately in ${countryNames} media (past 7-14 days):
+${kwList}
 
-TASK: Search for recent news articles (past 7 days, up to 14 if few results) from media outlets in: ${countryNames}.
+Rules: only ${countryNames} outlets, deduplicate by URL, 2-paragraph English summary each, relevance 0-100, sentiment positive/neutral/negative.
 
-Search EACH keyword SEPARATELY:
-${keywords.map((k, i) => `${i + 1}. "${k}"`).join("\n")}
-
-RULES:
-- Only include articles from media outlets based in: ${countryNames}
-- If an article matches multiple keywords, list it ONCE with all matching keywords
-- For each article write a 2-paragraph English summary
-- Score relevance 0-100 (how directly it covers UNRWA/related topics)
-- Assess sentiment toward UNRWA: positive, neutral, or negative
-- Include the direct URL to the original article
-
-RESPOND WITH ONLY valid JSON. No markdown, no backticks, no text before or after:
-
-{
-  "articles": [
-    {
-      "title": "Headline in original language",
-      "source": "Outlet name",
-      "country": "Country name",
-      "date": "YYYY-MM-DD",
-      "url": "https://...",
-      "keywords": ["matched", "keywords"],
-      "relevance": 85,
-      "sentiment": "neutral",
-      "summary_en": "Paragraph 1...\\n\\nParagraph 2..."
-    }
-  ]
-}`,
+Return ONLY JSON, no markdown:
+{"articles":[{"title":"...","source":"...","country":"...","date":"YYYY-MM-DD","url":"...","keywords":["..."],"relevance":85,"sentiment":"neutral","summary_en":"..."}]}`,
       },
     ],
   });
@@ -70,10 +46,11 @@ RESPOND WITH ONLY valid JSON. No markdown, no backticks, no text before or after
     throw new Error("No text response from Claude");
   }
 
-  let jsonStr = textBlock.text
-    .replace(/\`\`\`json\\s*/g, "")
-    .replace(/\`\`\`\\s*/g, "")
-    .trim();
+  let jsonStr = textBlock.text.trim();
+  const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[0];
+  }
 
   const parsed = JSON.parse(jsonStr);
   return parsed.articles || [];
