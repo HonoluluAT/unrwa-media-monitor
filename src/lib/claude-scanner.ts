@@ -23,7 +23,7 @@ async function searchWithWebTool(query: string): Promise<string> {
 
   // First call - Claude will want to use web search
   let response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-20250514",
     max_tokens: 4000,
     tools: tools,
     messages: [{ role: "user", content: query }],
@@ -50,7 +50,7 @@ async function searchWithWebTool(query: string): Promise<string> {
     allMessages.push({ role: "user", content: toolResults });
 
     response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-20250514",
       max_tokens: 4000,
       tools: tools,
       messages: allMessages,
@@ -104,7 +104,7 @@ export async function scanMedia(
   await delay(5000);
 
   const jsonResponse = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: "claude-sonnet-4-20250514",
     max_tokens: 8000,
     messages: [
       {
