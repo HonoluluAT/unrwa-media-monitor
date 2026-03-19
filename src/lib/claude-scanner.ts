@@ -86,7 +86,8 @@ export async function scanMedia(
   let searchResults = "";
   try {
     searchResults = await searchWithWebTool(
-      `Search the web for news articles published between ${weekAgo} and ${today} from media outlets in ${countryNames} that mention "${kwAll}". Look specifically at these outlets: ORF, Der Standard, NZZ, SRF, SWI swissinfo.ch, watson.ch, Kurier, Die Presse, Tages-Anzeiger, Blick. List every article you find including the exact title, source name, publication date, and full URL.`
+      `Search the web for news articles published between ${weekAgo} and ${today} from media outlets in ${countryNames} . Search broadly — include articles from the full 7-day period, not just today. Try multiple searches to find as many results as possible
+ that mention "${kwAll}". Look specifically at these outlets: ORF, Der Standard, NZZ, SRF, SWI swissinfo.ch, watson.ch, Kurier, Die Presse, Tages-Anzeiger, Blick. List every article you find including the exact title, source name, publication date, and full URL.`
     );
   } catch (e: any) {
     console.error("Search failed:", e.message);
