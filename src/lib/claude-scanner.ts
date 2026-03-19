@@ -22,28 +22,64 @@ export async function scanMedia(
   const today = new Date().toISOString().slice(0, 10);
   const kwList = keywords.map((k, i) => `${i + 1}. "${k}"`).join("\n");
 
-  const response = await client.messages.create({
+  // Step 1: Let Claude search the web freely
+  const searchResponse = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 8000,
+    max_tokens: 4000,
     // @ts-ignore
     tools: [{ type: "web_search_20250305", name: "web_search" }],
     messages: [
       {
         role: "user",
-        content: `Media monitor for UNRWA. Date: ${today}. Search each keyword separately in ${countryNames} media (past 7-14 days):
-${kwList}
+        content: `Search for recent news articles (past 14 days) about UNRWA from media outlets in ${countryNames}. Search these keywords: ${keywords.join(", ")}. List every article you find with its title, source, URL, and date.`,
+      },
+    ],
+  });
 
-Rules: only ${countryNames} outlets, deduplicate by URL, 2-paragraph English summary each, relevance 0-100, sentiment positive/neutral/negative.
+  // Collect all text from the search response
+  let searchText = "";
+  for (const block of searchResponse.content) {
+    if (block.type === "text") {
+      searchText += block.text + "\n";
+    }
+  }
 
-Return ONLY JSON, no markdown:
+  if (!searchText.trim()) {
+    return [];
+  }
+
+  // Step 2: Send the search results to Claude WITHOUT web search to get clean JSON
+  const jsonResponse = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 8000,
+    messages: [
+      {
+        role: "user",
+        content: `Here are search results about UNRWA from ${countryNames} media:
+
+${searchText}
+
+Convert these into a JSON array. For each article provide:
+- title (original language)
+- source (outlet name like NZZ, ORF, SRF, etc)
+- country (Austria or Switzerland)
+- date (YYYY-MM-DD)
+- url
+- keywords (which of these matched: ${keywords.join(", ")})
+- relevance (0-100, how directly it covers UNRWA)
+- sentiment (positive, neutral, or negative toward UNRWA)
+- summary_en (2 paragraph English summary)
+
+CRITICAL: Return ONLY a raw JSON object. No text before or after. No markdown. No explanation. Start with { and end with }
+
 {"articles":[{"title":"...","source":"...","country":"...","date":"YYYY-MM-DD","url":"...","keywords":["..."],"relevance":85,"sentiment":"neutral","summary_en":"..."}]}`,
       },
     ],
   });
 
-  const textBlock = response.content.find((b) => b.type === "text");
+  const textBlock = jsonResponse.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude");
+    return [];
   }
 
   let jsonStr = textBlock.text.trim();
@@ -52,6 +88,11 @@ Return ONLY JSON, no markdown:
     jsonStr = jsonMatch[0];
   }
 
-  const parsed = JSON.parse(jsonStr);
-  return parsed.articles || [];
+  try {
+    const parsed = JSON.parse(jsonStr);
+    return parsed.articles || [];
+  } catch (e) {
+    console.error("JSON parse failed. Raw response:", jsonStr.slice(0, 500));
+    return [];
+  }
 }
