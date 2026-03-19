@@ -5,11 +5,12 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function GET() {
   try {
+    const tools: any[] = [{ type: "web_search_20250305", name: "web_search" }];
+
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 3000,
-      // @ts-ignore
-      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      tools: tools,
       messages: [
         {
           role: "user",
@@ -34,3 +35,7 @@ export async function GET() {
   }
 }
 ```
+
+Commit. After redeploy, open:
+```
+https://unrwa-media-monitor.vercel.app/api/test-scan
