@@ -99,7 +99,7 @@ export default function Dashboard(){
   const[newKw,setNewKw]=useState("");
   const[tab,setTab]=useState("dashboard");
   const[loading,setLoading]=useState(false);
-  const[lastUp,setLastUp]=useState("");
+  const[lastUp,setLastUp]=useState(""); const[lastFull,setLastFull]=useState("—");
   const[wOrder,setWOrder]=useState(["mentions","relevance","sentiment","country","sources","coverage"]);
   const[dragI,setDragI]=useState<number|null>(null);
   const[overI,setOverI]=useState<number|null>(null);
