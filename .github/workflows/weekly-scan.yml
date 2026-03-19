@@ -1,7 +1,40 @@
-- name: Scan keyword - YOUR KEYWORD
-        run: |
-          curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=YOUR%20URL%20ENCODED%20KEYWORD" \
-            -H "Content-Type: application/json"
+name: Weekly UNRWA Media Scan
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scan Lazzarini
+        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Lazzarini"
 
       - name: Wait 3 minutes
         run: sleep 180
+
+      - name: Scan UNRWA
+        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=UNRWA"
+
+      - name: Wait 3 minutes
+        run: sleep 180
+
+      - name: Scan Hilfswerk
+        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen"
+
+      - name: Wait 3 minutes
+        run: sleep 180
+
+      - name: Scan UNRWA full name
+        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees"
+
+      - name: Wait 3 minutes
+        run: sleep 180
+
+      - name: Scan UNRWA short name
+        run: curl -sf -X POST "${{ secrets.APP_URL }}/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency"
+
+      - name: Send email report
+        run: curl -sf -X GET "${{ secrets.APP_URL }}/api/cron" -H "Authorization:Bearer ${{ secrets.CRON_SECRET }}"
