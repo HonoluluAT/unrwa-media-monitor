@@ -14,32 +14,23 @@ interface Article {
   summary_en: string;
 }
 
-const AT_OUTLETS = "ORF, Der Standard, Kurier, Kleine Zeitung, Die Presse, Wiener Zeitung, Salzburger Nachrichten, Parlament Österreich, BMEIA, Profil, Falter, Austrian Development Agency";
-const CH_OUTLETS = "NZZ, SRF, SWI swissinfo.ch, watson.ch, Tages-Anzeiger, Blick, 20 Minuten, Le Temps, RTS, Aargauer Zeitung, Basler Zeitung, Berner Zeitung, SP Schweiz, SVP Schweiz";
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-async function searchOnce(query: string): Promise<string> {
+async function searchBatch(query: string): Promise<string> {
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 3000,
     // @ts-ignore
     tools: [{ type: "web_search_20250305", name: "web_search" }],
-    messages: [
-      {
-        role: "user",
-        content: query,
-      },
-    ],
+    messages: [{ role: "user", content: query }],
   });
-
   let text = "";
   for (const block of response.content) {
     if (block.type === "text") text += block.text + "\n";
   }
   return text;
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function scanMedia(
@@ -48,72 +39,47 @@ export async function scanMedia(
 ): Promise<Article[]> {
   const today = new Date().toISOString().slice(0, 10);
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const countryNames = countries.map((c) => c.name).join(", ");
+  const kwAll = keywords.join(", ");
 
-  const hasAT = countries.some((c) => c.code === "AT");
-  const hasCH = countries.some((c) => c.code === "CH");
-
-  let allResults = "";
-
-  // Search each keyword with country-specific queries
-  for (let i = 0; i < keywords.length; i++) {
-    const kw = keywords[i];
-
-    if (hasAT) {
-      try {
-        const r = await searchOnce(
-          `Search for news articles from the past 7 days (${weekAgo} to ${today}) from Austrian media outlets (${AT_OUTLETS}) mentioning "${kw}". Find as many articles as possible. For each article list: title, source, date, URL.`
-        );
-        allResults += `\n--- Austria: "${kw}" ---\n${r}\n`;
-      } catch (e: any) {
-        console.error(`AT search failed for "${kw}":`, e.message);
-      }
-      await delay(15000);
-    }
-
-    if (hasCH) {
-      try {
-        const r = await searchOnce(
-          `Search for news articles from the past 7 days (${weekAgo} to ${today}) from Swiss media outlets (${CH_OUTLETS}) mentioning "${kw}". Find as many articles as possible. For each article list: title, source, date, URL.`
-        );
-        allResults += `\n--- Switzerland: "${kw}" ---\n${r}\n`;
-      } catch (e: any) {
-        console.error(`CH search failed for "${kw}":`, e.message);
-      }
-      await delay(15000);
-    }
+  // Single comprehensive search instead of per-keyword to stay under 60s
+  let searchResults = "";
+  try {
+    searchResults = await searchBatch(
+      `Search for all news articles from ${weekAgo} to ${today} from media outlets in ${countryNames} (especially ORF, Der Standard, NZZ, SRF, SWI swissinfo.ch, Kurier, watson.ch, Tages-Anzeiger, Die Presse, Blick) mentioning any of these: ${kwAll}. Find as many articles as possible. List each with title, source, date, URL.`
+    );
+  } catch (e: any) {
+    console.error("Search failed:", e.message);
+    return [];
   }
 
-  if (!allResults.trim()) return [];
+  if (!searchResults.trim()) return [];
 
-  await delay(15000);
+  await delay(5000);
 
-  // Convert to structured JSON
+  // Convert to JSON with detailed summaries
   const jsonResponse = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 8000,
     messages: [
       {
         role: "user",
-        content: `Here are search results for UNRWA-related news from Austrian and Swiss media (${weekAgo} to ${today}):
+        content: `Search results for UNRWA news from ${countryNames} media (${weekAgo} to ${today}):
 
-${allResults}
+${searchResults}
 
-Create a JSON object listing ALL unique articles found. Deduplicate by URL. If an article matched multiple keywords, list it once with all matching keywords.
-
-For each article provide:
-- title: original language headline
+Create JSON with ALL unique articles. For each:
+- title: original headline
 - source: outlet name
 - country: "Austria" or "Switzerland"
 - date: YYYY-MM-DD
-- url: full URL to the article
-- keywords: which of these matched: ${keywords.join(", ")}
-- relevance: 0-100 (how directly it covers UNRWA/Lazzarini/Palestine refugees)
-- sentiment: "positive", "neutral", or "negative" toward UNRWA
-- summary_en: a detailed English summary of 4-6 substantial paragraphs. Cover the key facts, quotes, political context, reactions from different parties, and the broader significance for UNRWA operations and funding. Be thorough and analytical, similar to a professional media briefing.
-Include ALL articles found, even if only tangentially related. Better to include more than miss important coverage.
+- url: full URL
+- keywords: matching terms from: ${kwAll}
+- relevance: 0-100
+- sentiment: "positive", "neutral", or "negative"
+- summary_en: detailed 4-6 paragraph English summary covering key facts, quotes, political context, reactions, and significance for UNRWA
 
-CRITICAL: Return ONLY raw JSON. No explanation. No markdown. Start with { end with }
-
+Return ONLY raw JSON. No markdown. No explanation. Start with { end with }
 {"articles":[]}`,
       },
     ],
