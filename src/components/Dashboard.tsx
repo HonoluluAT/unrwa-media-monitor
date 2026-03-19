@@ -211,8 +211,7 @@ export default function Dashboard(){
           <div style={{width:28,height:28,borderRadius:7,background:"linear-gradient(135deg,#60a5fa,#a78bfa)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,color:"#fff",flexShrink:0}}>U</div>
           <div style={{flex:1,minWidth:100}}>
             <div style={{fontSize:14,fontWeight:700,letterSpacing:"-.02em"}}>UNRWA Media Monitor</div>
-            <div style={{fontSize:9,color:"var(--t2)"}}>{activeCountries.map(c=>c.flag).join(" ")} · {lastUp}</div>
-          </div>
+<div style={{fontSize:9,color:"var(--t2)"}}>{activeCountries.map(c=>c.flag).join(" ")} · Quick: {lastUp} · Full: {lastFull}</div>          </div>
           <div style={{display:"flex",gap:2}}>
             {["dashboard","articles","keywords","settings"].map(t=>(
               <button key={t} onClick={()=>setTab(t)} style={{padding:"5px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:600,cursor:"pointer",textTransform:"capitalize",background:tab===t?"#60a5fa":"transparent",color:tab===t?"#fff":"var(--t3)"}}>{t}</button>
