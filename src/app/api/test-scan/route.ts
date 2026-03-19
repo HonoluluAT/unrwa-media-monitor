@@ -35,7 +35,3 @@ export async function GET() {
   }
 }
 ```
-
-Commit. After redeploy, open:
-```
-https://unrwa-media-monitor.vercel.app/api/test-scan
