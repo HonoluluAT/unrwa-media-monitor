@@ -20,7 +20,7 @@ jobs:
           curl -s -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=Lazzarini" -o /dev/null -w "HTTP %{http_code}" || true
 
       - name: Wait 3 minutes
-        run: sleep 180
+        run: sleep 360
 
       - name: Scan UNRWA
         run: |
@@ -28,7 +28,7 @@ jobs:
           curl -s -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=UNRWA" -o /dev/null -w "HTTP %{http_code}" || true
 
       - name: Wait 3 minutes
-        run: sleep 180
+        run: sleep 360
 
       - name: Scan Hilfswerk
         run: |
@@ -36,7 +36,7 @@ jobs:
           curl -s -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=Hilfswerk%20der%20Vereinten%20Nationen" -o /dev/null -w "HTTP %{http_code}" || true
 
       - name: Wait 3 minutes
-        run: sleep 180
+        run: sleep 360
 
       - name: Scan UNRWA full name
         run: |
@@ -44,7 +44,7 @@ jobs:
           curl -s -X POST "https://unrwa-media-monitor.vercel.app/api/scan?step=search-and-save&keyword=united%20nations%20relief%20and%20works%20agency%20for%20palestine%20refugees" -o /dev/null -w "HTTP %{http_code}" || true
 
       - name: Wait 3 minutes
-        run: sleep 180
+        run: sleep 360
 
       - name: Scan UNRWA short name
         run: |
